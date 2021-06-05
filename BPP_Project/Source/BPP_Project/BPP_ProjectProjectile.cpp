@@ -29,6 +29,9 @@ ABPP_ProjectProjectile::ABPP_ProjectProjectile()
 
 	// Die after 3 seconds by default
 	InitialLifeSpan = 3.0f;
+
+	SetReplicates(true);
+	SetReplicateMovement(true);
 }
 
 void ABPP_ProjectProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -38,6 +41,9 @@ void ABPP_ProjectProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
-		Destroy();
+		if (this->GetLocalRole() == ROLE_Authority)
+		{
+			Destroy();
+		}	
 	}
 }
