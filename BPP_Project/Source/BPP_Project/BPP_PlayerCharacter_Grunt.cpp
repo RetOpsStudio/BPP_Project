@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -65,6 +66,12 @@ void ABPP_PlayerCharacter_Grunt::BeginPlay()
 	{
 		FP_Gun->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
+}
+
+void ABPP_PlayerCharacter_Grunt::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(ABPP_PlayerCharacter_Grunt, LookUpServerDeg, COND_SkipOwner);
 }
 
 void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -152,6 +159,10 @@ bool ABPP_PlayerCharacter_Grunt::ServerFire_Validate()
 	return true;
 }
 
+void ABPP_PlayerCharacter_Grunt::ServerUpdateLookUp_Implementation(float Degrees)
+{
+	LookUpServerDeg = Degrees;
+}
 
 void ABPP_PlayerCharacter_Grunt::MoveForward(float Value)
 {
@@ -181,4 +192,12 @@ void ABPP_PlayerCharacter_Grunt::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	if (HasAuthority())
+	{	// if server, save actual rot multiplied by -1 to variable that replicates
+		LookUpServerDeg = (GetControlRotation().Pitch * -1);
+	}
+	else
+	{   // or call server to do so
+		ServerUpdateLookUp((GetControlRotation().Pitch * -1));
+	}
 }

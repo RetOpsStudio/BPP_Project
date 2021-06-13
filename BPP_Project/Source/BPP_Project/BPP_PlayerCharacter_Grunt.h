@@ -57,6 +57,9 @@ protected:
 
 	virtual void BeginPlay();
 
+	//for replicated variables
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
@@ -65,6 +68,9 @@ protected:
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerFire();
+
+	UFUNCTION(Server, Reliable)
+	void ServerUpdateLookUp(float Degrees);
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -83,6 +89,10 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	/*Used to rotate up and down mesh shown at server*/
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = Camera)
+	float LookUpServerDeg;
 
 public:
 	/** Returns Mesh1P subobject **/
