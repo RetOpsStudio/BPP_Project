@@ -14,6 +14,9 @@ class BPP_PROJECT_API ABPP_Gun : public ABPP_Weapon
 {
 	GENERATED_BODY()
 public:
+
+	ABPP_Gun();
+
 		/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class ABPP_ProjectProjectile> ProjectileClass;

@@ -11,6 +11,16 @@ ABPP_Weapon::ABPP_Weapon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	RootComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RootComponent"));
+
+	// Create a gun mesh component
+	Weapon_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon_Mesh"));
+	Weapon_Mesh->AttachToComponent(RootComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true));
+	Weapon_Mesh->bCastDynamicShadow = false;
+	Weapon_Mesh->CastShadow = false;
+
+
+	//UE_LOG(LogTemp, Warning, TEXT("sie tworzy"));
 
 }
 

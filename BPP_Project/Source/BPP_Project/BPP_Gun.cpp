@@ -3,6 +3,14 @@
 
 #include "BPP_Gun.h"
 
+ABPP_Gun::ABPP_Gun()
+{
+
+
+}
+
+
+
 void ABPP_Gun::Attack()
 {
 	Super::Attack();
