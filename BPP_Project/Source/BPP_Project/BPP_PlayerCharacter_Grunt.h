@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BPP_Gun_AR4.h"
 #include "BPP_ProjectCharacter.h"
 #include "BPP_PlayerCharacter_Grunt.generated.h"
-
+class ABPP_Gun;
 class UInputComponent;
 
 UCLASS()
@@ -16,10 +17,6 @@ class BPP_PROJECT_API ABPP_PlayerCharacter_Grunt : public ABPP_ProjectCharacter
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USkeletalMeshComponent* Mesh1P;
-
-	/** Gun mesh: 1st person view */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* FP_Gun;
 
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -49,9 +46,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class USoundBase* FireSound;
 
-	/** AnimMontage to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class UAnimMontage* FireAnimation;
+
+	/** Primary weapon class and child actor */
+	UPROPERTY(EditAnywhere, Category = Equipment)
+	TSubclassOf<ABPP_Gun> PrimaryWeaponClass = ABPP_Gun_AR4::StaticClass();
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	UChildActorComponent* PrimaryWeapon = nullptr;
 
 protected:
 
@@ -63,6 +64,9 @@ protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
+	/*Fire code extracted to function*/
+	void Fire();
+
 	/** Fires a projectile. */
 	void OnFire();
 
@@ -71,6 +75,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerUpdateLookUp(float Degrees);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticastFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

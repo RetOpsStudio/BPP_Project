@@ -9,6 +9,7 @@
 #include "Components/InputComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/InputSettings.h"
+#include "BPP_Gun.h"
 #include "Kismet/GameplayStatics.h"
 
 ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
@@ -36,20 +37,27 @@ ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
+	//// Create a gun mesh component
+	//FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
+	//FP_Gun->bCastDynamicShadow = false;
+	//FP_Gun->CastShadow = false;
 
-	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
-	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
+	//FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
+	//FP_MuzzleLocation->SetupAttachment(FP_Gun);
+	//FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 0.0f, 10.0f);
 
 	//mesh wisible to others
 	this->GetMesh()->SetOwnerNoSee(true);
+
+	//Create Primary Weapon Actor
+	PrimaryWeapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("PrimaryGun"));
+	PrimaryWeapon->SetChildActorClass(ABPP_Gun_AR4::StaticClass());
+	
+	PrimaryWeapon->CreateChildActor();
+	
 }
 
 void ABPP_PlayerCharacter_Grunt::BeginPlay()
@@ -60,11 +68,11 @@ void ABPP_PlayerCharacter_Grunt::BeginPlay()
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
 	if (IsLocallyControlled())
 	{
-		FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+		PrimaryWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
 	else
 	{
-		FP_Gun->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+		PrimaryWeapon->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
 }
 
@@ -99,59 +107,73 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ABPP_PlayerCharacter_Grunt::LookUpAtRate);
 }
 
+void ABPP_PlayerCharacter_Grunt::Fire()
+{
+	//testing before fully moving weapon to child actor
+	Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack();
+
+	// try and fire a projectile
+	//if (ProjectileClass)
+	//{
+	//	UWorld* const World = GetWorld();
+	//	if (World)
+	//	{
+	//		const FRotator SpawnRotation = GetControlRotation();
+	//		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	//		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+
+	//		//Set Spawn Collision Handling Override
+	//		FActorSpawnParameters ActorSpawnParams;
+	//		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+	//		// spawn the projectile at the muzzle
+	//		World->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+
+	//		//if (FireAnimation)
+	//		//{
+	//		//	if (IsLocallyControlled())
+	//		//	{
+	//		//		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+	//		//		if (AnimInstance)
+	//		//		{
+	//		//			AnimInstance->Montage_Play(FireAnimation, 1.f);
+	//		//		}
+	//		//	}
+	//		//	else
+	//		//	{
+	//		//		/*  TODO Play fire anim on mesh
+	//		//		UAnimInstance* AnimInstance = this->GetMesh()->GetAnimInstance();
+	//		//		if (AnimInstance)
+	//		//		{
+	//		//			AnimInstance->Montage_Play(FireAnimation, 1.f);
+	//		//		}
+	//		//		*/
+	//		//	}
+	//		//}
+
+	//		// try and play the sound if specified
+	//		if (FireSound != NULL)
+	//		{
+	//			UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+	//		}
+	//	}
+	//}
+}
+
 void ABPP_PlayerCharacter_Grunt::OnFire()
 {
+	//first fire on owning client then run it on server
+	if (!HasAuthority())
+	{
+		Fire();
+	}
 	ServerFire();
 }
 
 void ABPP_PlayerCharacter_Grunt::ServerFire_Implementation()
 {
-	// try and fire a projectile
-	if (ProjectileClass)
-	{
-		UWorld* const World = GetWorld();
-		if (World)
-		{
-			const FRotator SpawnRotation = GetControlRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-			// spawn the projectile at the muzzle
-			World->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-
-			if (FireAnimation)
-			{
-				if (IsLocallyControlled())
-				{
-					UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-					if (AnimInstance)
-					{
-						AnimInstance->Montage_Play(FireAnimation, 1.f);
-					}
-				}
-				else
-				{
-					/*  TODO Play fire anim on mesh
-					UAnimInstance* AnimInstance = this->GetMesh()->GetAnimInstance();
-					if (AnimInstance)
-					{
-						AnimInstance->Montage_Play(FireAnimation, 1.f);
-					}
-					*/
-				}
-			}
-
-			// try and play the sound if specified
-			if (FireSound != NULL)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-			}
-		}
-	}
+	//Fire();
+	NetMulticastFire();
 }
 
 bool ABPP_PlayerCharacter_Grunt::ServerFire_Validate()
@@ -162,6 +184,11 @@ bool ABPP_PlayerCharacter_Grunt::ServerFire_Validate()
 void ABPP_PlayerCharacter_Grunt::ServerUpdateLookUp_Implementation(float Degrees)
 {
 	LookUpServerDeg = Degrees;
+}
+
+void ABPP_PlayerCharacter_Grunt::NetMulticastFire_Implementation()
+{
+	Fire();
 }
 
 void ABPP_PlayerCharacter_Grunt::MoveForward(float Value)
