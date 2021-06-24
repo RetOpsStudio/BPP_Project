@@ -67,6 +67,8 @@ protected:
 	/*Fire code extracted to function*/
 	void Fire();
 
+	void FireFromMulticast();
+
 	/** Fires a projectile. */
 	void OnFire();
 

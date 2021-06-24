@@ -160,6 +160,16 @@ void ABPP_PlayerCharacter_Grunt::Fire()
 	//}
 }
 
+void ABPP_PlayerCharacter_Grunt::FireFromMulticast()
+{
+	//testing before fully moving weapon to child actor
+	if (HasAuthority() || !this->IsLocallyControlled())
+	{
+		Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack();
+	}
+}
+
+
 void ABPP_PlayerCharacter_Grunt::OnFire()
 {
 	//first fire on owning client then run it on server
@@ -188,7 +198,7 @@ void ABPP_PlayerCharacter_Grunt::ServerUpdateLookUp_Implementation(float Degrees
 
 void ABPP_PlayerCharacter_Grunt::NetMulticastFire_Implementation()
 {
-	Fire();
+	FireFromMulticast();
 }
 
 void ABPP_PlayerCharacter_Grunt::MoveForward(float Value)
