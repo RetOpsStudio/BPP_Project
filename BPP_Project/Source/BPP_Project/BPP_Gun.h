@@ -17,13 +17,13 @@ public:
 
 	ABPP_Gun();
 
-		/** Projectile class to spawn */
+	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class ABPP_ProjectProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
+	/** Muzzle flash particle class to spawn */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class USoundBase* FireSound;
+	UParticleSystem* MuzzleFlash;
 
 	virtual void Attack() override;
 

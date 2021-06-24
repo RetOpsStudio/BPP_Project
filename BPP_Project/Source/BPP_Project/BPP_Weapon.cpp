@@ -3,6 +3,7 @@
 
 #include "BPP_Weapon.h"
 #include "BPP_PlayerCharacter_Grunt.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -30,6 +31,10 @@ void ABPP_Weapon::Attack()
 	ABPP_PlayerCharacter_Grunt* GunOwner = Cast<ABPP_PlayerCharacter_Grunt>(GetParentActor());
 	if(GunOwner && AttackAnimation)
 	{
+		if (AttackSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, AttackSound, GetActorLocation());//TODO Set Attenuation
+		}
 		//if locally controlled, get mesh from owner and play attack animation on it
 		if (GunOwner->IsLocallyControlled())
 		{

@@ -56,7 +56,7 @@ ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 	PrimaryWeapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("PrimaryGun"));
 	PrimaryWeapon->SetChildActorClass(ABPP_Gun_AR4::StaticClass());
 	
-	PrimaryWeapon->CreateChildActor();
+	PrimaryWeapon->CreateChildActor(); //TODO Set Instigator on it
 	
 }
 

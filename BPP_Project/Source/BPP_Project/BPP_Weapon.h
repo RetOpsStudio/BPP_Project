@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BPP_Weapon.generated.h"
 
+
 UCLASS()
 class BPP_PROJECT_API ABPP_Weapon : public AActor
 {
@@ -28,6 +29,11 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USkeletalMeshComponent* Weapon_Mesh;
 
+	/** Sound to play each time we fire */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	class USoundBase* AttackSound;
+
+
 	/** AnimMontage to play each time we Attack */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* AttackAnimation;
@@ -35,5 +41,7 @@ protected:
 	/** AnimMontage to play for other players each time we Attack */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* AttackAnimationTp;
+
+	
 
 };

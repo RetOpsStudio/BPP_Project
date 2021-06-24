@@ -30,8 +30,8 @@ ABPP_ProjectProjectile::ABPP_ProjectProjectile()
 	// Die after 3 seconds by default
 	InitialLifeSpan = 3.0f;
 
-	SetReplicates(true);
-	SetReplicateMovement(true);
+	//SetReplicates(true);
+	//SetReplicateMovement(true);
 }
 
 void ABPP_ProjectProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
