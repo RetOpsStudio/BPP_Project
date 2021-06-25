@@ -42,6 +42,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* AttackAnimationTp;
 
+	class ABPP_PlayerCharacter_Grunt* GunOwner;
+private:
 	
 
 };

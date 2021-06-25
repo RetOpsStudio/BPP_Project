@@ -28,7 +28,6 @@ ABPP_Weapon::ABPP_Weapon()
 void ABPP_Weapon::Attack()
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Fire")));
-	ABPP_PlayerCharacter_Grunt* GunOwner = Cast<ABPP_PlayerCharacter_Grunt>(GetParentActor());
 	if(GunOwner && AttackAnimation)
 	{
 		if (AttackSound)
@@ -53,6 +52,9 @@ void ABPP_Weapon::Attack()
 void ABPP_Weapon::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//constructor executes too early for putting this inside
+	GunOwner = Cast<ABPP_PlayerCharacter_Grunt>(GetParentActor());
 }
 
 
