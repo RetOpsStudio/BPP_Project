@@ -107,10 +107,10 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ABPP_PlayerCharacter_Grunt::LookUpAtRate);
 }
 
-void ABPP_PlayerCharacter_Grunt::Fire()
+void ABPP_PlayerCharacter_Grunt::Fire(FRotator AimRotation)
 {
 	//testing before fully moving weapon to child actor
-	Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack();
+	Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack(AimRotation);
 
 	// try and fire a projectile
 	//if (ProjectileClass)
@@ -160,33 +160,34 @@ void ABPP_PlayerCharacter_Grunt::Fire()
 	//}
 }
 
-void ABPP_PlayerCharacter_Grunt::FireFromMulticast()
+void ABPP_PlayerCharacter_Grunt::FireFromMulticast(FRotator AimRotation)
 {
 	//testing before fully moving weapon to child actor
 	if (HasAuthority() || !this->IsLocallyControlled())
 	{
-		Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack();
+		Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack(AimRotation);
 	}
 }
 
 
 void ABPP_PlayerCharacter_Grunt::OnFire()
 {
+	FRotator AimRotation = GetControlRotation();
 	//first fire on owning client then run it on server
 	if (!HasAuthority())
 	{
-		Fire();
+		Fire(AimRotation);
 	}
-	ServerFire();
+	ServerFire(AimRotation);
 }
 
-void ABPP_PlayerCharacter_Grunt::ServerFire_Implementation()
+void ABPP_PlayerCharacter_Grunt::ServerFire_Implementation(FRotator AimRotation)
 {
 	//Fire();
-	NetMulticastFire();
+	NetMulticastFire(AimRotation);
 }
 
-bool ABPP_PlayerCharacter_Grunt::ServerFire_Validate()
+bool ABPP_PlayerCharacter_Grunt::ServerFire_Validate(FRotator AimRotation)
 {
 	return true;
 }
@@ -196,9 +197,9 @@ void ABPP_PlayerCharacter_Grunt::ServerUpdateLookUp_Implementation(float Degrees
 	LookUpServerDeg = Degrees;
 }
 
-void ABPP_PlayerCharacter_Grunt::NetMulticastFire_Implementation()
+void ABPP_PlayerCharacter_Grunt::NetMulticastFire_Implementation(FRotator AimRotation)
 {
-	FireFromMulticast();
+	FireFromMulticast(AimRotation);
 }
 
 void ABPP_PlayerCharacter_Grunt::MoveForward(float Value)

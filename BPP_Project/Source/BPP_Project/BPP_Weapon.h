@@ -17,7 +17,7 @@ public:
 	ABPP_Weapon();
 
 	/*Every weapon got kind of attack*/
-	virtual void Attack();
+	virtual void Attack(FRotator AimRotation = FRotator(0,0,0));
 
 protected:
 	// Called when the game starts or when spawned

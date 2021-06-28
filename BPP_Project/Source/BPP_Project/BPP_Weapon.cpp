@@ -25,7 +25,7 @@ ABPP_Weapon::ABPP_Weapon()
 
 }
 
-void ABPP_Weapon::Attack()
+void ABPP_Weapon::Attack(FRotator AimRotation)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Fire")));
 	if(GunOwner && AttackAnimation)

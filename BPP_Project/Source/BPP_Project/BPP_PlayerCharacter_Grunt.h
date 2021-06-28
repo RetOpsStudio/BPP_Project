@@ -65,21 +65,21 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 	/*Fire code extracted to function*/
-	void Fire();
+	void Fire(FRotator AimRotation = FRotator(0, 0, 0));
 
-	void FireFromMulticast();
+	void FireFromMulticast(FRotator AimRotation = FRotator(0, 0, 0));
 
 	/** Fires a projectile. */
 	void OnFire();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerFire();
+	void ServerFire(FRotator AimRotation = FRotator(0, 0, 0));
 
 	UFUNCTION(Server, Reliable)
 	void ServerUpdateLookUp(float Degrees);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticastFire();
+	void NetMulticastFire(FRotator AimRotation = FRotator(0, 0, 0));
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

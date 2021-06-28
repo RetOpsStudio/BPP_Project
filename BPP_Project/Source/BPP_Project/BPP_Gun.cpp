@@ -4,6 +4,7 @@
 #include "BPP_Gun.h"
 #include "BPP_ProjectProjectile.h"
 #include "Engine/World.h"
+#include "DrawDebugHelpers.h"
 #include "BPP_PlayerCharacter_Grunt.h"
 
 ABPP_Gun::ABPP_Gun()
@@ -14,14 +15,15 @@ ABPP_Gun::ABPP_Gun()
 
 
 
-void ABPP_Gun::Attack()
+void ABPP_Gun::Attack(FRotator AimRotation)
 {
-	Super::Attack();
+	Super::Attack(AimRotation);
 	if (ProjectileClass)
 	{
-		//spawn bullet in bullet socket in gun
+		//spawn bullet in  socket 
 		FVector BulletSpawnLocation = Weapon_Mesh->GetSocketLocation("BulletSpawn");
-		FRotator BulletSpawnRotation = Cast<ABPP_PlayerCharacter_Grunt>(GetParentActor())->GetControlRotation(); //TODO fix, this doesnt replicate from server to other players
-		ABPP_ProjectProjectile* SpawnedBullet = GetWorld()->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, BulletSpawnLocation, BulletSpawnRotation);//TODO Set instigator on owner
+		ABPP_ProjectProjectile* SpawnedBullet = GetWorld()->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, BulletSpawnLocation, AimRotation);//TODO Set instigator on owner
+		SpawnedBullet->SetOwner(GunOwner);
+		//DrawDebugLine(GetWorld(), BulletSpawnLocation, BulletSpawnLocation + AimRotation.Vector() * 1000.f, FColor(255, 0, 0), false, 2.f);
 	}
 }
