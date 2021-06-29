@@ -25,8 +25,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UParticleSystem* MuzzleFlash;
 
+
 	virtual void Attack(FRotator AimRotation = FRotator(0, 0, 0)) override;
 
 protected:
+	
 
 };

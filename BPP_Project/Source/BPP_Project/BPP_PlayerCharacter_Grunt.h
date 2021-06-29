@@ -54,6 +54,8 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	UChildActorComponent* PrimaryWeapon = nullptr;
 
+	FTimerHandle AttackTimerHandle;
+
 protected:
 
 	virtual void BeginPlay();
@@ -65,12 +67,15 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 	/*Fire code extracted to function*/
-	void Fire(FRotator AimRotation = FRotator(0, 0, 0));
+	void Fire();
 
 	void FireFromMulticast(FRotator AimRotation = FRotator(0, 0, 0));
 
 	/** Fires a projectile. */
 	void OnFire();
+
+	/** Stops firing*/
+	void StopFire();
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerFire(FRotator AimRotation = FRotator(0, 0, 0));
@@ -102,6 +107,8 @@ protected:
 	/*Used to rotate up and down mesh shown at server*/
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = Camera)
 	float LookUpServerDeg;
+
+	ABPP_Weapon* AcctualUsedWeapon = nullptr;
 
 public:
 	/** Returns Mesh1P subobject **/

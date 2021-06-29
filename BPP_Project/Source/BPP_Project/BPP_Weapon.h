@@ -19,6 +19,15 @@ public:
 	/*Every weapon got kind of attack*/
 	virtual void Attack(FRotator AimRotation = FRotator(0,0,0));
 
+	/*definies if attack should loop or no */
+	bool bIsAutomatic = false;
+
+	float AttackRate = 400; //per minute
+
+	float AttackInterval = 60 / AttackRate; //in seconds
+
+	float LastAttackTime = 0; //used to check if can fire again
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

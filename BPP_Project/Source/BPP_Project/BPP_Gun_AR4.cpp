@@ -10,15 +10,10 @@
 ABPP_Gun_AR4::ABPP_Gun_AR4()
 {
 
-	//RootComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RootComponent"));
+	bIsAutomatic = true;
+	AttackRate = 600; //per minute
 
-	//// Create a gun mesh component
-	//Weapon_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon_Mesh"));
-	//Weapon_Mesh->AttachToComponent(RootComponent,FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true));
-	//Weapon_Mesh->bCastDynamicShadow = false;
-	//Weapon_Mesh->CastShadow = false;
-	//
-	//
-	////UE_LOG(LogTemp, Warning, TEXT("sie tworzy"));
+	AttackInterval = 60 / AttackRate; //in seconds
+
 }
 

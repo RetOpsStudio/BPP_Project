@@ -28,6 +28,7 @@ ABPP_Weapon::ABPP_Weapon()
 void ABPP_Weapon::Attack(FRotator AimRotation)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Fire")));
+	LastAttackTime = GetWorld()->GetTimeSeconds();
 	if(GunOwner && AttackAnimation)
 	{
 		if (AttackSound)

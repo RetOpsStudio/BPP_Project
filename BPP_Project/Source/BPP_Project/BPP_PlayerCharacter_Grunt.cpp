@@ -10,6 +10,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/InputSettings.h"
 #include "BPP_Gun.h"
+#include "TimerManager.h"
+#include "Math/UnrealMathUtility.h"
 #include "Kismet/GameplayStatics.h"
 
 ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
@@ -74,6 +76,8 @@ void ABPP_PlayerCharacter_Grunt::BeginPlay()
 	{
 		PrimaryWeapon->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	}
+
+	AcctualUsedWeapon = Cast<ABPP_Weapon>(PrimaryWeapon->GetChildActor());
 }
 
 void ABPP_PlayerCharacter_Grunt::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -93,6 +97,7 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ABPP_PlayerCharacter_Grunt::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABPP_PlayerCharacter_Grunt::StopFire);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABPP_PlayerCharacter_Grunt::MoveForward);
@@ -107,11 +112,28 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ABPP_PlayerCharacter_Grunt::LookUpAtRate);
 }
 
-void ABPP_PlayerCharacter_Grunt::Fire(FRotator AimRotation)
-{
-	//testing before fully moving weapon to child actor
-	Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack(AimRotation);
 
+void ABPP_PlayerCharacter_Grunt::OnFire()
+{
+	bool bInLoop = AcctualUsedWeapon->bIsAutomatic;
+	float InRate = AcctualUsedWeapon->AttackInterval;
+	float TimeThatWeaponCanAttackAgain = AcctualUsedWeapon->LastAttackTime + AcctualUsedWeapon->AttackInterval;
+	float InFirstDelay = FMath::Clamp<float>(TimeThatWeaponCanAttackAgain - GetWorld()->GetTimeSeconds(), 0, InRate); //prevent overriding fire rate by fast clicking
+	GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABPP_PlayerCharacter_Grunt::Fire, InRate, bInLoop, InFirstDelay);
+}
+
+void ABPP_PlayerCharacter_Grunt::Fire()
+{
+	if(!AcctualUsedWeapon)
+	{
+		return;
+	}
+	FRotator AimRotation = GetControlRotation();
+	if (!HasAuthority())
+	{
+		AcctualUsedWeapon->Attack(AimRotation);
+	}
+	ServerFire(AimRotation);
 	// try and fire a projectile
 	//if (ProjectileClass)
 	//{
@@ -162,23 +184,20 @@ void ABPP_PlayerCharacter_Grunt::Fire(FRotator AimRotation)
 
 void ABPP_PlayerCharacter_Grunt::FireFromMulticast(FRotator AimRotation)
 {
+	if (!AcctualUsedWeapon)
+	{
+		return;
+	}
 	//testing before fully moving weapon to child actor
 	if (HasAuthority() || !this->IsLocallyControlled())
 	{
-		Cast<ABPP_Gun>(PrimaryWeapon->GetChildActor())->Attack(AimRotation);
+		AcctualUsedWeapon->Attack(AimRotation);
 	}
 }
 
-
-void ABPP_PlayerCharacter_Grunt::OnFire()
+void ABPP_PlayerCharacter_Grunt::StopFire()
 {
-	FRotator AimRotation = GetControlRotation();
-	//first fire on owning client then run it on server
-	if (!HasAuthority())
-	{
-		Fire(AimRotation);
-	}
-	ServerFire(AimRotation);
+	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle); //stops auto attack
 }
 
 void ABPP_PlayerCharacter_Grunt::ServerFire_Implementation(FRotator AimRotation)
