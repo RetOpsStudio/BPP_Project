@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "BPP_PlayerCharacter_Grunt.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
 ABPP_Gun::ABPP_Gun()
@@ -27,5 +28,7 @@ void ABPP_Gun::Attack(FRotator AimRotation)
 		ABPP_ProjectProjectile* SpawnedBullet = GetWorld()->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, BulletSpawnLocation, AimRotation);//TODO Set instigator on owner
 		SpawnedBullet->SetOwner(GunOwner);
 		//DrawDebugLine(GetWorld(), BulletSpawnLocation, BulletSpawnLocation + AimRotation.Vector() * 1000.f, FColor(255, 0, 0), false, 2.f);
+		//SpawnMuzzleFlash
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, BulletSpawnLocation, Weapon_Mesh->GetSocketRotation("BulletSpawn"));
 	}
 }

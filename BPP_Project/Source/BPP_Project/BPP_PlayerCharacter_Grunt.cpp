@@ -118,7 +118,7 @@ void ABPP_PlayerCharacter_Grunt::OnFire()
 	bool bInLoop = AcctualUsedWeapon->bIsAutomatic;
 	float InRate = AcctualUsedWeapon->AttackInterval;
 	float TimeThatWeaponCanAttackAgain = AcctualUsedWeapon->LastAttackTime + AcctualUsedWeapon->AttackInterval;
-	float InFirstDelay = FMath::Clamp<float>(TimeThatWeaponCanAttackAgain - GetWorld()->GetTimeSeconds(), 0, InRate); //prevent overriding fire rate by fast clicking
+	float InFirstDelay = FMath::Clamp<float>(TimeThatWeaponCanAttackAgain - GetWorld()->GetTimeSeconds(), 0, InRate); //prevents overriding fire rate by fast clicking
 	GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABPP_PlayerCharacter_Grunt::Fire, InRate, bInLoop, InFirstDelay);
 }
 
