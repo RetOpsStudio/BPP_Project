@@ -9,7 +9,7 @@
 
 ABPP_Gun_AR4::ABPP_Gun_AR4()
 {
-
+	
 	bIsAutomatic = true;
 	AttackRate = 600; //per minute
 

@@ -13,6 +13,8 @@
 #include "TimerManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 {
@@ -24,35 +26,27 @@ ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 	BaseLookUpRate = 45.f;
 
 	// Create a CameraComponent	
-	UCameraComponent* CameraComp = this->GetCameraComponent();
-	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	CameraComp->SetupAttachment(GetCapsuleComponent());
-	CameraComp->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
-	CameraComp->bUsePawnControlRotation = true;
-
+	//UCameraComponent* CameraComp = this->GetCameraComponent();
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	CameraComponent->SetupAttachment(GetCapsuleComponent());
+	CameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
+	CameraComponent->bUsePawnControlRotation = true;
+	// Create AimCameraComponent
+	AimCameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("AimCamera"));
+	AimCameraComp->AttachToComponent(CameraComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+	AimCameraComp->bUsePawnControlRotation = true;
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->SetupAttachment(CameraComp);
+	Mesh1P->SetupAttachment(CameraComponent);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
-	//// Create a gun mesh component
-	//FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	//FP_Gun->bCastDynamicShadow = false;
-	//FP_Gun->CastShadow = false;
-
-	//FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	//FP_MuzzleLocation->SetupAttachment(FP_Gun);
-	//FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
-
-	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 0.0f, 10.0f);
-
 	//mesh wisible to others
 	this->GetMesh()->SetOwnerNoSee(true);
+	
 
 	//Create Primary Weapon Actor
 	PrimaryWeapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("PrimaryGun"));
@@ -95,6 +89,9 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	// Bind Aim event
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABPP_PlayerCharacter_Grunt::OnAim);
+
 	// Bind fire event
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ABPP_PlayerCharacter_Grunt::OnFire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABPP_PlayerCharacter_Grunt::StopFire);
@@ -113,6 +110,7 @@ void ABPP_PlayerCharacter_Grunt::SetupPlayerInputComponent(class UInputComponent
 }
 
 
+
 void ABPP_PlayerCharacter_Grunt::OnFire()
 {
 	bool bInLoop = AcctualUsedWeapon->bIsAutomatic;
@@ -120,6 +118,60 @@ void ABPP_PlayerCharacter_Grunt::OnFire()
 	float TimeThatWeaponCanAttackAgain = AcctualUsedWeapon->LastAttackTime + AcctualUsedWeapon->AttackInterval;
 	float InFirstDelay = FMath::Clamp<float>(TimeThatWeaponCanAttackAgain - GetWorld()->GetTimeSeconds(), 0, InRate); //prevents overriding fire rate by fast clicking
 	GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABPP_PlayerCharacter_Grunt::Fire, InRate, bInLoop, InFirstDelay);
+}
+
+void ABPP_PlayerCharacter_Grunt::OnAim()
+{
+	if (!bIsADS)
+	{
+		if (Cast<ABPP_Gun>(AcctualUsedWeapon)) // if weapon is gun TODO check if it shouldnt be interface
+		{
+			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
+			bIsADS = true;
+			CameraComponent->SetActive(false);
+			AimCameraComp->SetActive(true);
+			GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::AimDownSights, GetWorld()->GetDeltaSeconds(), true);
+		}
+	}
+	else
+	{
+		if (Cast<ABPP_Gun>(AcctualUsedWeapon)) // if weapon is gun TODO check if it shouldnt be interface
+		{
+			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
+			bIsADS = false;
+			GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::StopAimDownSights, GetWorld()->GetDeltaSeconds(), true);
+		}
+	}
+}
+
+void ABPP_PlayerCharacter_Grunt::AimDownSights()
+{
+	auto Gun = Cast<ABPP_Gun>(AcctualUsedWeapon);
+	if (Gun)
+	{
+		AimCameraComp->FieldOfView = FMath::FInterpTo(AimCameraComp->FieldOfView, 60.f, GetWorld()->GetDeltaSeconds(),25);
+		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), Gun->GetSightTransform(), GetWorld()->GetDeltaSeconds(),25);
+		AimCameraComp->SetWorldTransform(NewTransform);
+		UE_LOG(LogTemp, Warning, TEXT("beeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
+	}
+}
+
+void ABPP_PlayerCharacter_Grunt::StopAimDownSights()
+{
+	if (CameraComponent)
+	{
+		AimCameraComp->FieldOfView = FMath::FInterpTo(AimCameraComp->FieldOfView, 90.f, GetWorld()->GetDeltaSeconds(), 25);
+		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), GetWorld()->GetDeltaSeconds(), 25);
+		AimCameraComp->SetWorldTransform(NewTransform);
+		UE_LOG(LogTemp, Warning, TEXT("weeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
+		if (UKismetMathLibrary::NearlyEqual_TransformTransform(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), 0.2, 0.2, 0.2))
+		{
+			AimCameraComp->AttachToComponent(CameraComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
+			CameraComponent->SetActive(true);
+			AimCameraComp->SetActive(false);
+		}
+	}
 }
 
 void ABPP_PlayerCharacter_Grunt::Fire()
@@ -134,52 +186,7 @@ void ABPP_PlayerCharacter_Grunt::Fire()
 		AcctualUsedWeapon->Attack(AimRotation);
 	}
 	ServerFire(AimRotation);
-	// try and fire a projectile
-	//if (ProjectileClass)
-	//{
-	//	UWorld* const World = GetWorld();
-	//	if (World)
-	//	{
-	//		const FRotator SpawnRotation = GetControlRotation();
-	//		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-	//		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-	//		//Set Spawn Collision Handling Override
-	//		FActorSpawnParameters ActorSpawnParams;
-	//		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-	//		// spawn the projectile at the muzzle
-	//		World->SpawnActor<ABPP_ProjectProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-
-	//		//if (FireAnimation)
-	//		//{
-	//		//	if (IsLocallyControlled())
-	//		//	{
-	//		//		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-	//		//		if (AnimInstance)
-	//		//		{
-	//		//			AnimInstance->Montage_Play(FireAnimation, 1.f);
-	//		//		}
-	//		//	}
-	//		//	else
-	//		//	{
-	//		//		/*  TODO Play fire anim on mesh
-	//		//		UAnimInstance* AnimInstance = this->GetMesh()->GetAnimInstance();
-	//		//		if (AnimInstance)
-	//		//		{
-	//		//			AnimInstance->Montage_Play(FireAnimation, 1.f);
-	//		//		}
-	//		//		*/
-	//		//	}
-	//		//}
-
-	//		// try and play the sound if specified
-	//		if (FireSound != NULL)
-	//		{
-	//			UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	//		}
-	//	}
-	//}
+	
 }
 
 void ABPP_PlayerCharacter_Grunt::FireFromMulticast(FRotator AimRotation)
@@ -248,6 +255,10 @@ void ABPP_PlayerCharacter_Grunt::TurnAtRate(float Rate)
 void ABPP_PlayerCharacter_Grunt::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
+	if (!CameraComponent->IsActive())
+	{
+		CameraComponent->SetWorldRotation(GetControlRotation());
+	}
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 	if (HasAuthority())
 	{	// if server, save actual rot multiplied by -1 to variable that replicates
@@ -256,5 +267,6 @@ void ABPP_PlayerCharacter_Grunt::LookUpAtRate(float Rate)
 	else
 	{   // or call server to do so
 		ServerUpdateLookUp((GetControlRotation().Pitch * -1));
+		
 	}
 }

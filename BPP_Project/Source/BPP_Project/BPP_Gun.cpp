@@ -7,13 +7,14 @@
 #include "DrawDebugHelpers.h"
 #include "BPP_PlayerCharacter_Grunt.h"
 #include "Kismet/GameplayStatics.h"
+#include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 
 ABPP_Gun::ABPP_Gun()
 {
 
-
 }
+
 
 
 
@@ -31,4 +32,9 @@ void ABPP_Gun::Attack(FRotator AimRotation)
 		//SpawnMuzzleFlash
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, BulletSpawnLocation, Weapon_Mesh->GetSocketRotation("BulletSpawn"));
 	}
+}
+
+FTransform ABPP_Gun::GetSightTransform()
+{
+	return Weapon_Mesh->GetSocketTransform("SightLocation");
 }

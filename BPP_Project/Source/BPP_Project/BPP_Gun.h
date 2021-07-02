@@ -16,6 +16,8 @@ class BPP_PROJECT_API ABPP_Gun : public ABPP_Weapon
 public:
 
 	ABPP_Gun();
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	FTransform GetSightTransform(); //return location where owner camera should be to aim down sights
 
 	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
@@ -24,7 +26,6 @@ public:
 	/** Muzzle flash particle class to spawn */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UParticleSystem* MuzzleFlash;
-
 
 	virtual void Attack(FRotator AimRotation = FRotator(0, 0, 0)) override;
 

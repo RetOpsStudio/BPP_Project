@@ -13,18 +13,19 @@ class ABPP_ProjectCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** First person camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* CameraComponent;
 
 public:
 	ABPP_ProjectCharacter();
+
+	/** First person camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
+	class UCameraComponent* CameraComponent;
 
 protected:
 	virtual void BeginPlay();
 
 public:
 	/** Returns FirstPersonCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetCameraComponent() const { return CameraComponent; }
+	FORCEINLINE class UCameraComponent* GetCameraComponent() { return CameraComponent; }
 };
 

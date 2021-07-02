@@ -18,9 +18,6 @@ class BPP_PROJECT_API ABPP_PlayerCharacter_Grunt : public ABPP_ProjectCharacter
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USkeletalMeshComponent* Mesh1P;
 
-	/** Location on gun mesh where projectiles should spawn. */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USceneComponent* FP_MuzzleLocation;
 
 public:
 
@@ -34,18 +31,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
-	/** Gun muzzle's offset from the characters location */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	FVector GunOffset;
-
-	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-	TSubclassOf<class ABPP_ProjectProjectile> ProjectileClass;
-
-	/** Sound to play each time we fire */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class USoundBase* FireSound;
-
 
 	/** Primary weapon class and child actor */
 	UPROPERTY(EditAnywhere, Category = Equipment)
@@ -54,7 +39,14 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	UChildActorComponent* PrimaryWeapon = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	ABPP_Weapon* AcctualUsedWeapon = nullptr;
+
 	FTimerHandle AttackTimerHandle;
+	FTimerHandle AimTimerHandle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
+	UCameraComponent* AimCameraComp =nullptr;
 
 protected:
 
@@ -66,7 +58,12 @@ protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
-	/*Fire code extracted to function*/
+	void OnAim(); //function bound to input TODO Bind to input
+
+	void AimDownSights();
+
+	void StopAimDownSights();
+
 	void Fire();
 
 	void FireFromMulticast(FRotator AimRotation = FRotator(0, 0, 0));
@@ -108,7 +105,8 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = Camera)
 	float LookUpServerDeg;
 
-	ABPP_Weapon* AcctualUsedWeapon = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	bool bIsADS = false;
 
 public:
 	/** Returns Mesh1P subobject **/
