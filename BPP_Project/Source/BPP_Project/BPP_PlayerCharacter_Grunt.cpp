@@ -33,7 +33,6 @@ ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 	CameraComponent->bUsePawnControlRotation = true;
 	// Create AimCameraComponent
 	AimCameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("AimCamera"));
-	AimCameraComp->AttachToComponent(CameraComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
 	AimCameraComp->bUsePawnControlRotation = true;
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -43,6 +42,8 @@ ABPP_PlayerCharacter_Grunt::ABPP_PlayerCharacter_Grunt()
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
+	//Mesh1P->SetupAttachment(RootComponent);
+	AimCameraComp->SetupAttachment(Mesh1P);
 
 	//mesh wisible to others
 	this->GetMesh()->SetOwnerNoSee(true);
@@ -126,11 +127,13 @@ void ABPP_PlayerCharacter_Grunt::OnAim()
 	{
 		if (Cast<ABPP_Gun>(AcctualUsedWeapon)) // if weapon is gun TODO check if it shouldnt be interface
 		{
+			AimCameraComp->SetWorldTransform(CameraComponent->GetComponentTransform());
 			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
 			bIsADS = true;
-			CameraComponent->SetActive(false);
 			AimCameraComp->SetActive(true);
+			CameraComponent->SetActive(false);
 			GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::AimDownSights, GetWorld()->GetDeltaSeconds(), true);
+		
 		}
 	}
 	else
@@ -149,27 +152,37 @@ void ABPP_PlayerCharacter_Grunt::AimDownSights()
 	auto Gun = Cast<ABPP_Gun>(AcctualUsedWeapon);
 	if (Gun)
 	{
+		CameraComponent->SetWorldRotation(GetControlRotation());
 		AimCameraComp->FieldOfView = FMath::FInterpTo(AimCameraComp->FieldOfView, 60.f, GetWorld()->GetDeltaSeconds(),25);
-		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), Gun->GetSightTransform(), GetWorld()->GetDeltaSeconds(),25);
+		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), Gun->GetSightTransform(), GetWorld()->GetDeltaSeconds()/2,25);
 		AimCameraComp->SetWorldTransform(NewTransform);
-		UE_LOG(LogTemp, Warning, TEXT("beeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
+		
+		//GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::AimDownSights, GetWorld()->GetDeltaSeconds()/2, true);
+		
+		/*GetWorld()->GetTimerManager().SetTimer(SetCameraComponentRotationHandle, [&]
+			{
+				
+				UE_LOG(LogTemp, Warning, TEXT("beeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
+			}, GetWorld()->GetDeltaSeconds(), true);*/
 	}
 }
 
 void ABPP_PlayerCharacter_Grunt::StopAimDownSights()
 {
 	if (CameraComponent)
-	{
-		AimCameraComp->FieldOfView = FMath::FInterpTo(AimCameraComp->FieldOfView, 90.f, GetWorld()->GetDeltaSeconds(), 25);
-		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), GetWorld()->GetDeltaSeconds(), 25);
+	{	
+		CameraComponent->SetWorldRotation(GetControlRotation());
+		Mesh1P->AttachToComponent(CameraComponent, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
+		AimCameraComp->FieldOfView = FMath::FInterpTo(AimCameraComp->FieldOfView, 90.f, GetWorld()->GetDeltaSeconds(), 10);
+		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), GetWorld()->GetDeltaSeconds()/2, 10);
 		AimCameraComp->SetWorldTransform(NewTransform);
 		UE_LOG(LogTemp, Warning, TEXT("weeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
-		if (UKismetMathLibrary::NearlyEqual_TransformTransform(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), 0.2, 0.2, 0.2))
+
+		if (UKismetMathLibrary::NearlyEqual_TransformTransform(AimCameraComp->GetComponentTransform(), CameraComponent->GetComponentTransform(), 0.1, 0.1, 0.1))
 		{
-			AimCameraComp->AttachToComponent(CameraComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
 			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
-			CameraComponent->SetActive(true);
 			AimCameraComp->SetActive(false);
+			CameraComponent->SetActive(true);
 		}
 	}
 }
@@ -255,10 +268,7 @@ void ABPP_PlayerCharacter_Grunt::TurnAtRate(float Rate)
 void ABPP_PlayerCharacter_Grunt::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
-	if (!CameraComponent->IsActive())
-	{
-		CameraComponent->SetWorldRotation(GetControlRotation());
-	}
+	
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 	if (HasAuthority())
 	{	// if server, save actual rot multiplied by -1 to variable that replicates

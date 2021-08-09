@@ -43,7 +43,10 @@ public:
 	ABPP_Weapon* AcctualUsedWeapon = nullptr;
 
 	FTimerHandle AttackTimerHandle;
+
 	FTimerHandle AimTimerHandle;
+
+	FTimerHandle SetCameraComponentRotationHandle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
 	UCameraComponent* AimCameraComp =nullptr;
