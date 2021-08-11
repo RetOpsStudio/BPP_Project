@@ -10,6 +10,7 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/InputSettings.h"
 #include "BPP_Gun.h"
+#include "BPP_ProjectHUD.h"
 #include "TimerManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Kismet/GameplayStatics.h"
@@ -133,7 +134,7 @@ void ABPP_PlayerCharacter_Grunt::OnAim()
 			AimCameraComp->SetActive(true);
 			CameraComponent->SetActive(false);
 			GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::AimDownSights, GetWorld()->GetDeltaSeconds(), true);
-		
+			Cast<ABPP_ProjectHUD>(Cast<APlayerController>(this->GetOwner())->GetHUD())->ShowHUD();//temporary solution
 		}
 	}
 	else
@@ -143,6 +144,7 @@ void ABPP_PlayerCharacter_Grunt::OnAim()
 			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
 			bIsADS = false;
 			GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::StopAimDownSights, GetWorld()->GetDeltaSeconds(), true);
+			Cast<ABPP_ProjectHUD>(Cast<APlayerController>(this->GetOwner())->GetHUD())->ShowHUD(); //temporary solution
 		}
 	}
 }
@@ -157,13 +159,6 @@ void ABPP_PlayerCharacter_Grunt::AimDownSights()
 		auto NewTransform = UKismetMathLibrary::TInterpTo(AimCameraComp->GetComponentTransform(), Gun->GetSightTransform(), GetWorld()->GetDeltaSeconds()/2,25);
 		AimCameraComp->SetWorldTransform(NewTransform);
 		
-		//GetWorld()->GetTimerManager().SetTimer(AimTimerHandle, this, &ABPP_PlayerCharacter_Grunt::AimDownSights, GetWorld()->GetDeltaSeconds()/2, true);
-		
-		/*GetWorld()->GetTimerManager().SetTimer(SetCameraComponentRotationHandle, [&]
-			{
-				
-				UE_LOG(LogTemp, Warning, TEXT("beeee  %s"), *Cast<ABPP_Gun>(AcctualUsedWeapon)->GetSightTransform().GetLocation().ToString());
-			}, GetWorld()->GetDeltaSeconds(), true);*/
 	}
 }
 
@@ -183,6 +178,7 @@ void ABPP_PlayerCharacter_Grunt::StopAimDownSights()
 			GetWorld()->GetTimerManager().ClearTimer(AimTimerHandle);
 			AimCameraComp->SetActive(false);
 			CameraComponent->SetActive(true);
+			
 		}
 	}
 }
